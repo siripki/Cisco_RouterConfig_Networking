@@ -1,0 +1,194 @@
+KONFIGURASI SWITCH 0
+//menambahkan vlan
+Switch>en
+Switch#vlan database
+Switch(vlan)#vlan 10 name VLAN10  
+Switch(vlan)#vlan 20 name VLAN20
+Switch(vlan)#ex
+
+//konfigurasi port vlan access dan trunk port
+Switch#conf t
+Switch(config)#int range f0/1-2
+Switch(config-if-range)#sw mo ac
+Switch(config-if-range)#sw ac vlan 10
+Switch(config-if-range)#no sh
+Switch(config-if-range)#int range f0/3-4
+Switch(config-if-range)#sw mo ac
+Switch(config-if-range)#sw ac vlan 20
+Switch(config-if-range)#no sh
+Switch(config-if-range)#int g0/1 
+Switch(config-if)#sw mo trunk
+Switch(config-if)#no sh
+Switch(config-if)#end
+
+
+
+KONFIGURASI SWITCH 1
+//menambahkan vlan
+Switch>en
+Switch#vlan database
+Switch(vlan)#vlan 10 name VLAN10
+Switch(vlan)#vlan 20 name VLAN20
+Switch(vlan)#ex
+
+//konfigurasi port vlan access dan trunk port
+Switch#conf t
+Switch(config)#int range f0/1-2
+Switch(config-if-range)#sw mo ac
+Switch(config-if-range)#sw ac vlan 10
+Switch(config-if-range)#no sh
+Switch(config-if-range)#int range f0/3-4 
+Switch(config-if-range)#sw mo ac
+Switch(config-if-range)#sw ac vlan 20
+Switch(config-if-range)#no sh
+Switch(config-if-range)#int g0/1 
+Switch(config-if)#sw mo trunk
+Switch(config-if)#no sh
+Switch(config-if)#end
+
+
+
+KONFIGURASIROUTER 3
+//pemberian ip tiap interface
+Router>en
+Router#conf t
+Router(config)#int g0/0 
+Router(config-if)#ip add 10.10.10.1 255.255.255.0
+Router(config-if)#no sh
+Router(config-if)#int g0/1
+Router(config-if)#ip add 20.20.20.1 255.255.255.0
+Router(config-if)#no sh
+Router(config-if)#int g0/2
+Router(config-if)#ip add 30.30.30.1 255.255.255.0
+Router(config-if)#no sh
+Router(config-if)#ex
+
+//setting routing dynamic
+Router(config)#ro rip
+Router(config-router)#version 2
+Router(config-router)#network 10.10.10.0
+Router(config-router)#network 20.20.20.0
+Router(config-router)#network 30.30.30.0
+Router(config-router)#no auto-summary
+Router(config-router)#end
+
+
+
+KONFIGURASI ROUTER 0
+//pemberian ip int g0/0
+Router>en
+Router#conf t
+Router(config)#int g0/0
+Router(config-if)#ip add 20.20.20.100 255.255.255.0
+Router(config-if)#no sh
+Router(config-if)#ex
+
+//konfigurasi dynamic routing
+Router(config)#ro rip
+Router(config-router)#version 2
+Router(config-router)#network 20.20.20.0
+Router(config-router)#network 192.168.10.0
+Router(config-router)#network 192.168.20.0
+Router(config-router)#ex
+
+//mengaktifkan interface g0/1
+Router(config)#int g0/1
+Router(config-if)#no sh
+
+//konfigurasi interface vlan 10
+Router(config-if)#int g0/1.10
+Router(config-subif)#encapsulation dot1q 10
+Router(config-subif)#ip add 192.168.10.1 255.255.255.0
+Router(config-subif)#ip dhcp pool VLAN10
+Router(dhcp-config)#network 192.168.10.0 255.255.255.0
+Router(dhcp-config)#default-router 192.168.10.1
+Router(dhcp-config)#dns-server 8.8.8.8
+Router(dhcp-config)#ip dhcp excluded-address 192.168.10.1 192.168.10.2
+
+//konfigurasi interface vlan 20
+Router(config)#int g0/1.20
+Router(config-subif)#encapsulation dot1q 20
+Router(config-subif)#ip add 192.168.20.1 255.255.255.0
+Router(config-subif)#ip dhcp pool VLAN20
+Router(dhcp-config)#network 192.168.20.0 255.255.255.0
+Router(dhcp-config)#default-router 192.168.20.1
+Router(dhcp-config)#dns-server 8.8.8.8
+Router(dhcp-config)#ip dhcp excluded-address 192.168.20.1 192.168.20.2
+Router(config)#end
+
+//konfigurasi Dynamic NAT jenis PAT
+Router>en
+Router#conf t
+Router(config)#int g0/0
+Router(config-if)#ip nat outside
+Router(config-if)#ex
+Router(config)#int g0/1.10
+Router(config-subif)#ip nat inside
+Router(config-subif)#ex
+Router(config)#int g0/1.20
+Router(config-subif)#ip nat inside
+Router(config-subif)#ex
+Router(config)#access-list 1 permit 192.168.10.0 0.0.0.255
+Router(config)#access-list 1 permit 192.168.20.0 0.0.0.255
+Router(config)#ip nat inside source list 1 int g0/0 overload
+Router(config)#end
+
+
+
+KONFIGURASI ROUTER 1
+Router>en
+Router#conf t
+Router(config)#int g0/0
+Router(config-if)#ip add 30.30.30.100 255.255.255.0
+Router(config-if)#no sh
+Router(config-if)#ex
+
+//konfigurasi dynamic routing
+Router(config)#ro rip
+Router(config-router)#version 2
+Router(config-router)#network 30.30.30.0
+Router(config-router)#network 192.168.30.0
+Router(config-router)#network 192.168.40.0
+Router(config-router)#ex
+
+//mengaktifkan interface g0/1
+Router(config)#int g0/1
+Router(config-if)#no sh
+
+//konfigurasi interface vlan 10
+Router(config-if)#int g0/1.10
+Router(config-subif)#encapsulation dot1q 10
+Router(config-subif)#ip add 192.168.30.1 255.255.255.0
+Router(config-subif)#ip dhcp pool VLAN10
+Router(dhcp-config)#network 192.168.30.0 255.255.255.0
+Router(dhcp-config)#default-router 192.168.30.1
+Router(dhcp-config)#dns-server 8.8.8.8
+Router(dhcp-config)#ip dhcp excluded-address 192.168.30.1 192.168.30.2
+
+//konfigurasi interface vlan 20
+Router(config)#int g0/1.20
+Router(config-subif)#encapsulation dot1q 20
+Router(config-subif)#ip add 192.168.40.1 255.255.255.0
+Router(config-subif)#ip dhcp pool VLAN20
+Router(dhcp-config)#network 192.168.40.0 255.255.255.0
+Router(dhcp-config)#default-router 192.168.40.1
+Router(dhcp-config)#dns-server 8.8.8.8
+Router(dhcp-config)#ip dhcp excluded-address 192.168.40.1 192.168.40.2
+Router(config)#end
+
+//konfigurasi Dynamic NAT jenis PAT
+Router>en
+Router#conf t
+Router(config)#int g0/0
+Router(config-if)#ip nat outside
+Router(config-if)#ex
+Router(config)#int g0/1.10
+Router(config-subif)#ip nat inside
+Router(config-subif)#ex
+Router(config)#int g0/1.20
+Router(config-subif)#ip nat inside
+Router(config-subif)#ex
+Router(config)#access-list 1 permit 192.168.30.0 0.0.0.255
+Router(config)#access-list 1 permit 192.168.40.0 0.0.0.255
+Router(config)#ip nat inside source list 1 int g0/0 overload
+Router(config)#end
